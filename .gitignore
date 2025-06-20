@@ -2,3 +2,8 @@
 .vscode
 .idea
 YOLOv8/main/datasets/sitting_pose/
+YOLOv8/main/datasets/sitting_pose_augmented/
+buildDataset/sitting_pose/
+buildDataset/sitting_pose_augmented/
+logs/
+tmp/

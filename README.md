@@ -2,23 +2,30 @@
 
 ## Introduction
 
-**NOTE:** The directory `YOLOv8` was downloaded from `https://github.com/ultralytics/ultralytics`, which is then modified slightly.
+This repository contains a **YOLOv8-based model** for sitting pose detection, along with a simple **web backend** for [hunckbackDetect](https://github.com/ying-2626/hunckbackDetect). We also provide scripts for building the dataset.
+
+For sitting pose detection, we first constructed **a brand new dataset** through **knowledge distillation** and **fine-tuning**. Specifically, we used [Google Mediapipe](https://github.com/google-ai-edge/mediapipe) to collect 300 images annotated with 3D keypoints. We then leveraged [hunckbackDetect](https://github.com/ying-2626/hunckbackDetect) to label each image as either `sitting_bad` or `sitting_good`. Since some images were incorrectly processed due to partial occlusion, we used `X-AnyLabeling` to manually correct the annotations. Then we **augmented** the data with **18 basic DIP methods**. Finally we trained a YOLOv8-based model using this dataset.
+
+For the backend, we designed a simple structure that takes a **JPG image** as input and outputs the **sitting pose classification** along with its **confidence score**, to support [hunckbackDetect](https://github.com/ying-2626/hunckbackDetect).
+
+**NOTE:** The directory `YOLOv8` was downloaded from `https://github.com/ultralytics/ultralytics`, which was then modified slightly.
 
 ## Project Structure
 
-## Testing Environment
+The structure of the project is described as follows.
 
-The project has been tested in the following environment.
-
-| Item | Detail |
-| ---- | ---- |
-| Platform | HP OMEN 17 2022 |
-| OS | Ubuntu 22.04 LTS |
-| CPU | Intel Core i7-12800HX |
-| GPU | NVIDIA GeForce RTX 3080 Ti Laptop (16GB) |
-| CUDA | 11.8 |
-| Memory | 32GB RAM |
-| Disk | 2TB SSD |
+```bash
+.
+├── buildDataset    # Scripts for building the dataset
+├── image           # Static information for demonstration
+├── logs            # Records of the backend service
+├── README.md
+├── runs            # Checkpoints of the pre-trained models
+├── server          # Scripts for backend service
+├── test            # Deprecated
+├── YOLOv8          # Scripts for training, majorly derived from Ultralytics
+└── yolov8n.pt      # Necessary dependency
+```
 
 ## Installation Guide
 
@@ -38,19 +45,95 @@ cd path/to/SittingWatch
 pip install -r requirements.txt
 ```
 
-To finish installation, install `ultralytics` through `pip`.
+To use YOLO for inference, install `ultralytics` through `pip`.
 
 ```bash
 pip install ultralytics
 ```
 
-## Backend Service
+Also install `flask` and `gunicorn` for backend.
+
+```bash
+pip install flask gunicorn
+```
+
+## Start Backend Service
+
+Use the following commands to start the backend service.
+
+```bash
+cd server
+gunicorn --workers 1 --threads 1 --bind 0.0.0.0:6666 app:app
+```
+
+To verify the server, try the following command.
+
+```bash
+curl -X POST -F "image=@path/to/your/test.jpg" http://localhost:6666/detect
+```
+
+The result should be something like below.
+
+```bash
+{"class":"sitting_bad","conf":"0.7605"}
+```
+
+The server has been tested for [hunckbackDetect](https://github.com/ying-2626/hunckbackDetect).
 
 ## Further Details
 
+### Testing Environment
+
+The project has been tested in the following environment.
+
+| Item | Detail |
+| ---- | ---- |
+| Platform | HP OMEN 17 2022 |
+| OS | Ubuntu 22.04 LTS |
+| CPU | Intel Core i7-12800HX |
+| GPU | NVIDIA GeForce RTX 3080 Ti Laptop (16GB) |
+| CUDA | 11.8 |
+| Memory | 32GB RAM |
+| Disk | 2TB SSD |
+
 ### Inference without Backend
 
+Try the following commands.
+
+```bash
+cd server
+python inference-test.py
+```
+
 ### Data Preparation
+
+Suppose that you have got a dataset in YOLO format. You can use the following commands to augment the data.
+
+```bash
+cd buildDataset
+python augment_data.py
+```
+
+Detailed information of the **18 basic DIP methods** are listed below.
+
+- Horizontal flip  
+- Rotate +10°  
+- Rotate -10°  
+- Rotate +20°  
+- Rotate -20°  
+- Rotate +30°  
+- Rotate -30°  
+- Gaussian blur  
+- Brightness increase (level 1)  
+- Brightness increase (level 2)  
+- Brightness decrease (level 1)  
+- Brightness decrease (level 2)  
+- Contrast increase (level 1)  
+- Contrast increase (level 2)  
+- Contrast decrease (level 1)  
+- Contrast decrease (level 2)  
+- Sharpening (level 1)  
+- Sharpening (level 2)
 
 ### Training Guide
 
@@ -85,5 +168,5 @@ yolo detect train data=main/datasets/sitting_pose/data.yaml model=yolov8n.yaml p
 
 The result should be something like below.
 
-![训练样例](image/training_example.jpg)
+![training_example](image/training_example.png)
 
