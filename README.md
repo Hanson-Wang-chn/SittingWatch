@@ -96,6 +96,22 @@ The project has been tested in the following environment.
 | Memory | 32GB RAM |
 | Disk | 2TB SSD |
 
+### API References
+
+**POST** `/detect`
+
+**Description**: Detects posture in a JPG image using the YOLOv8 model and returns classification and confidence.
+
+| **Field**          | **Description**                                                                 |
+|--------------------|---------------------------------------------------------------------------------|
+| **Method**         | POST                                                                           |
+| **URL**            | `/detect`                                                                      |
+| **Request Body**   | `image`: JPG image file                                                        |
+| **Status Codes**   | - 200: Success<br>- 400: Invalid input (missing image or unsupported format)    |
+| **Response Body**  | ```json<br>{<br>  "class": "sitting_bad" \| "sitting_good" \| "busy" \| "nan",<br>  "conf": "<float between 0 and 1, formatted to .4f, 0.0 for 'nan' or 'busy'>"<br>}<br>``` |
+| **Error Response** | ```json<br>{<br>  "error": "<error message>"<br>}<br>```                       |
+| **Notes**          | - Processes one inference at a time using a queue.<br>- Returns `{"class": "busy", "conf": "0.0"}` if queue exceeds 50 requests.<br>- Saves annotated images in `/home/whs/PoseDetection/SittingWatch/logs/{date}` as `annotated_{HHMMSS}.jpg`. |
+
 ### Inference without Backend
 
 Try the following commands.
